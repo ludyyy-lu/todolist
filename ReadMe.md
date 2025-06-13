@@ -18,3 +18,14 @@ Todo List管理系统
 | 删除任务     | 删除指定任务      |
 | 简单用户注册登录 | 用来测试鉴权（可选）  |
 
+## 第一步 初始化项目目录结构
+todo-app/
+├── main.go             # 程序入口
+├── config/             # 配置管理
+├── controllers/        # 业务逻辑
+├── models/             # 数据模型
+├── routers/            # 路由定义
+├── utils/              # 工具包（比如JWT）
+├── middleware/         # 中间件（比如鉴权）
+
+## 创建main.go
