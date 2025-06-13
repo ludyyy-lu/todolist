@@ -18,7 +18,7 @@ Todo List管理系统
 | 删除任务     | 删除指定任务      |
 | 简单用户注册登录 | 用来测试鉴权（可选）  |
 
-## 第一步 初始化项目目录结构
+## 初始化项目目录结构
 todo-app/
 ├── main.go             # 程序入口
 ├── config/             # 配置管理
@@ -28,4 +28,5 @@ todo-app/
 ├── utils/              # 工具包（比如JWT）
 ├── middleware/         # 中间件（比如鉴权）
 
-## 创建main.go
+## GORM自动建表
+在main.go中，使用AutoMigrate方法创建数据库表。
