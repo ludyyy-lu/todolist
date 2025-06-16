@@ -11,9 +11,9 @@ func SetupRouters(r *gin.Engine) {
 	//创建todo
 	r.POST("/todos",controllers.CreateTodo)
 
-	// //更新todo
-	// r.PUT("/todos/:id",controllers.UpdateTodo)
+	//更新todo
+	r.PUT("/todos/:id",controllers.UpdateTodo)
 
-	// //删除todo
-	// r.DELETE("/todos/:id",controllers.DeleteTodo)
+	//删除todo
+	r.DELETE("/todos/:id",controllers.DeleteTodo)
 }
