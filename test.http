@@ -1,7 +1,10 @@
-POST http://localhost:8080/todos
-Content-Type: application/json
+# POST http://localhost:8080/todos
+# Content-Type: application/json
 
-{
-  "title": "学习Gin框架",
-  "description": "今天搞定项目初始化和创建任务功能"
-}
+# {
+#   "title": "学习Gin框架",
+#   "description": "今天搞定项目初始化和创建任务功能"
+# }
+
+
+GET http://localhost:8080/todos
