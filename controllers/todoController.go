@@ -22,8 +22,7 @@ func CreateTodo(c *gin.Context) {
 	}
 
 	todo.UserID = 1 //暂时不写用户模块
-
-	if err := models.CreateTodo(&todo);err != nil {
+	if err := config.DB.Create(&todo).Error;err!= nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "创建失败",
 		})

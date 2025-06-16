@@ -19,4 +19,25 @@
 #   "status": "completed"
 # }
 
-DELETE http://localhost:8080/todos/1
+# DELETE http://localhost:8080/todos/1
+
+# POST http://localhost:8080/register 
+# Content-Type: application/json
+
+# {
+#   "username": "ludy",
+#   "password": "123456"
+# }
+
+# POST http://localhost:8080/login
+# Content-Type: application/json
+
+# {
+#   "username": "ludy",
+#   "password": "123456"
+# }
+
+
+
+# GET http://localhost:8080/todos
+# Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTAxNTkyNjQsInVzZXJfaWQiOjF9.3w28VQEhtS6mnQNdVZWohkSx_Y7A2ixpZD0lqpzXs7E
