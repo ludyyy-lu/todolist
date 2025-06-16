@@ -10,19 +10,26 @@ import (
 
 func CreateTodo(c *gin.Context) {
 	var todo models.Todo
-	if err := c.ShouldBindJSON(&todo);err != nil {
+	if err := c.ShouldBindJSON(&todo); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
+			"error": "请求参数错误",
 		})
 		return
 	}
 
+	userIDVal, exists := c.Get("user_id") // 从上下文中获取用户ID
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未认证用户"})
+		return
+	}
+	userID := userIDVal.(uint) // 转换为uint类型
+
+	todo.UserID = userID
+
 	if todo.Status == "" {
 		todo.Status = "pending" //默认状态
 	}
-
-	todo.UserID = 1 //暂时不写用户模块
-	if err := config.DB.Create(&todo).Error;err!= nil {
+	if err := config.DB.Create(&todo).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "创建失败",
 		})
@@ -31,30 +38,39 @@ func CreateTodo(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "创建成功",
-		"todo": todo,
+		"todo":    todo,
 	})
 }
+
 // 获取所有的todo
 func GetTodos(c *gin.Context) {
+	userID := c.GetUint("user_id") // 从上下文中获取用户ID
 	var todos []models.Todo
-	result := config.DB.Find(&todos)
 
-	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": result.Error.Error(),
-		})
+	if err := config.DB.Where("user_id = ?", userID).Find(&todos).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取失败"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": todos})
 }
 
+func getTodoByID(c *gin.Context) (*models.Todo, bool) {
+	//todo的id
+	id := c.Param("id")
+	userID := c.GetUint("user_id")
+
+	var todo models.Todo
+	if err := config.DB.First("id = ? AND user_id = ?", id, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "任务不存在或无权限"})
+		return nil, false
+	}
+	return &todo, true
+}
+
 // 更新todo
 func UpdateTodo(c *gin.Context) {
-	var todo models.Todo
-	id := c.Param("id")
-	//查询任务是否存在
-	if err := config.DB.First(&todo, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "任务不存在"})
+	todo, ok := getTodoByID(c)
+	if !ok {
 		return
 	}
 
@@ -83,15 +99,10 @@ func UpdateTodo(c *gin.Context) {
 }
 
 func DeleteTodo(c *gin.Context) {
-	id := c.Param("id")
-
-	var todo models.Todo
-	//查询任务是否存在
-	if err := config.DB.First(&todo, id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "任务不存在"})
+	todo, ok := getTodoByID(c)
+	if !ok {
 		return
 	}
-
 	if err := config.DB.Delete(&todo).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除失败"})
 		return
