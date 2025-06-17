@@ -9,5 +9,5 @@ type Todo struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	Status      string `json:"status"`
-	UserID      uint   `json:"user_id"` //暂时不写用户模块
+	UserID      uint   `json:"user_id"`
 }

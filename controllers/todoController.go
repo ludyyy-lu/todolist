@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 	"todolist/config"
 	"todolist/models"
 
@@ -45,13 +46,55 @@ func CreateTodo(c *gin.Context) {
 // 获取所有的todo
 func GetTodos(c *gin.Context) {
 	userID := c.GetUint("user_id") // 从上下文中获取用户ID
-	var todos []models.Todo
 
-	if err := config.DB.Where("user_id = ?", userID).Find(&todos).Error; err != nil {
+	//解析分页参数
+	//从 URL 参数里拿出用户传的分页参数
+	pageStr := c.DefaultQuery("page", "1")
+	sizeStr := c.DefaultQuery("size", "10")
+	// string -> int
+	page, _ := strconv.Atoi(pageStr)
+	size, _ := strconv.Atoi(sizeStr)
+	if page < 1 {
+		page = 1
+	}
+	if size < 1 || size > 100 {
+		size = 10
+	}
+	offset := (page - 1) * size
+
+	//模糊搜索
+	keyword := c.Query("keyword")
+	sort := c.DefaultQuery("sort", "created_at_desc") // 默认按创建时间降序排序
+
+	orderStr := "created_at DESC" // 默认排序方式
+	switch sort {
+	case "created_at_asc":
+		orderStr = "created_at ASC"
+	case "updated_at_desc":
+		orderStr = "updated_at DESC"
+	case "updated_at_asc":
+		orderStr = "updated_at ASC"
+	}
+
+	var todos []models.Todo
+	query := config.DB.Where("user_id = ?", userID)
+	if keyword != "" {
+		query = query.Where("title LIKE ? OR description LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+	}
+	//执行查询语句
+	err := query.Order(orderStr).Limit(size).Offset(offset).Find(&todos).Error
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取失败"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": todos})
+
+	c.JSON(http.StatusOK, gin.H{
+		"page":    page,
+		"size":    size,
+		"data":    todos,
+		"totals":  len(todos),
+		"message": "获取成功",
+	})
 }
 
 func getTodoByID(c *gin.Context) (*models.Todo, bool) {
