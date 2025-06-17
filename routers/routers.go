@@ -33,7 +33,13 @@ func SetupRouters(r *gin.Engine) {
 		auth.PUT("/todos/:id", controllers.UpdateTodo)
 		auth.DELETE("/todos/:id", controllers.DeleteTodo)
 		auth.GET("/todos", controllers.GetTodos)
+
+		auth.GET("/tags", controllers.GetTags)
 		auth.POST("/tags", controllers.CreateTag)
+		auth.DELETE("/tags/:id", controllers.DeleteTag)
+		
 		auth.POST("/todos/:id/tags", controllers.SetTodoTags)
+		auth.GET("/todos/:id/tags", controllers.GetTodoTags)
+		auth.DELETE("/todos/:id/tags/:tag_id", controllers.RemoveTodoTag)
 	}
 }
