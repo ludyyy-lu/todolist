@@ -10,4 +10,5 @@ type Todo struct {
 	Description string `json:"description"`
 	Status      string `json:"status"`
 	UserID      uint   `json:"user_id"`
+	Tags        []Tag  `gorm:"many2many:todo_tags;" json:"tags"`
 }
