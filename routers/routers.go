@@ -8,17 +8,6 @@ import (
 )
 
 func SetupRouters(r *gin.Engine) {
-	// //获取所有todo
-	// r.GET("/todos", controllers.GetTodos)
-	// //创建todo
-	// r.POST("/todos", controllers.CreateTodo)
-
-	// //更新todo
-	// r.PUT("/todos/:id", controllers.UpdateTodo)
-
-	// //删除todo
-	// r.DELETE("/todos/:id", controllers.DeleteTodo)
-
 	//注册
 	r.POST("/register", controllers.Register)
 
@@ -43,5 +32,7 @@ func SetupRouters(r *gin.Engine) {
 		auth.DELETE("/todos/:id/tags/:tag_id", controllers.RemoveTodoTag)
 
 		auth.GET("/todos/statistics", controllers.GetTodoStatistics)
+		auth.PATCH("/todos/:id/recover", controllers.RecoverTodo)
+		auth.GET("/todos/deleted", controllers.GetDeletedTodos)
 	}
 }

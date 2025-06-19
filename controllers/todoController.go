@@ -234,3 +234,14 @@ func RecoverTodo(c *gin.Context) {
 		return
 	}
 }
+
+func GetDeletedTodos(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	var todos []models.Todo
+	if err := config.DB.Unscoped().Where("user_id = ? AND deleted_at IS NOT NULL", userID).Find(&todos).Error; err != nil {
+		utils.Error(c, http.StatusInternalServerError, "获取失败")
+		return
+	}
+	utils.Success(c, gin.H{"data": todos}, "获取成功")
+}
