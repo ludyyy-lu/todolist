@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"todolist/config"
 	"todolist/models"
+	"todolist/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,15 +13,21 @@ import (
 func CreateTodo(c *gin.Context) {
 	var todo models.Todo
 	if err := c.ShouldBindJSON(&todo); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "请求参数错误",
-		})
+		utils.Error(
+			c,
+			http.StatusBadRequest,
+			"获取失败",
+		)
 		return
 	}
 
 	userIDVal, exists := c.Get("user_id") // 从上下文中获取用户ID
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "未认证用户"})
+		utils.Error(
+			c,
+			http.StatusUnauthorized,
+			"未认证用户",
+		)
 		return
 	}
 	userID := userIDVal.(uint) // 转换为uint类型
@@ -31,16 +38,21 @@ func CreateTodo(c *gin.Context) {
 		todo.Status = "pending" //默认状态
 	}
 	if err := config.DB.Create(&todo).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "创建失败",
-		})
+		utils.Error(
+			c,
+			http.StatusInternalServerError,
+			"创建失败",
+		)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "创建成功",
-		"todo":    todo,
-	})
+	utils.Success(
+		c,
+		gin.H{
+			"todo":    todo,
+		},
+		"创建成功",
+	)
 }
 
 // 获取所有的todo
@@ -77,24 +89,36 @@ func GetTodos(c *gin.Context) {
 	}
 
 	var todos []models.Todo
+	var total int64
 	query := config.DB.Where("user_id = ?", userID)
+	query.Count(&total)
+
 	if keyword != "" {
 		query = query.Where("title LIKE ? OR description LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
 	}
 	//执行查询语句
 	err := query.Order(orderStr).Limit(size).Offset(offset).Find(&todos).Error
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取失败"})
+		utils.Error(
+			c,
+			http.StatusInternalServerError,
+			"获取失败",
+		)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	responseData := gin.H{
 		"page":    page,
 		"size":    size,
 		"data":    todos,
-		"totals":  len(todos),
-		"message": "获取成功",
-	})
+		"totals":  total,
+	}
+
+	utils.Success(
+		c,
+		responseData,
+		"获取成功",
+	)
 }
 
 func getTodoByID(c *gin.Context) (*models.Todo, bool) {
@@ -104,7 +128,7 @@ func getTodoByID(c *gin.Context) (*models.Todo, bool) {
 
 	var todo models.Todo
 	if err := config.DB.First("id = ? AND user_id = ?", id, userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "任务不存在或无权限"})
+		utils.Error(c, http.StatusNotFound, "任务不存在或无权限")
 		return nil, false
 	}
 	return &todo, true
@@ -124,7 +148,7 @@ func UpdateTodo(c *gin.Context) {
 		Status      string `json:"status"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数错误"})
+		utils.Error(c, http.StatusBadRequest, "请求参数错误")
 		return
 	}
 
@@ -134,11 +158,11 @@ func UpdateTodo(c *gin.Context) {
 	todo.Status = input.Status
 
 	if err := config.DB.Save(&todo).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新失败"})
+		utils.Error(c, http.StatusInternalServerError, "更新失败")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": todo})
+	utils.Success(c, gin.H{"data": todo}, "更新成功")
 }
 
 func DeleteTodo(c *gin.Context) {
@@ -147,9 +171,8 @@ func DeleteTodo(c *gin.Context) {
 		return
 	}
 	if err := config.DB.Delete(&todo).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除失败"})
+		utils.Error(c, http.StatusInternalServerError, "删除失败")
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "任务删除成功"})
+	utils.Success(c, nil, "删除成功")
 }
