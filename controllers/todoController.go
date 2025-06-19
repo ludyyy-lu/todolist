@@ -127,7 +127,7 @@ func getTodoByID(c *gin.Context) (*models.Todo, bool) {
 	userID := c.GetUint("user_id")
 
 	var todo models.Todo
-	if err := config.DB.First("id = ? AND user_id = ?", id, userID).Error; err != nil {
+	if err := config.DB.Where("id = ? AND user_id = ?", id, userID).First(&todo).Error; err != nil {
 		utils.Error(c, http.StatusNotFound, "任务不存在或无权限")
 		return nil, false
 	}
@@ -165,6 +165,8 @@ func UpdateTodo(c *gin.Context) {
 	utils.Success(c, gin.H{"data": todo}, "更新成功")
 }
 
+// 因为是Gorm.Model，所以会自动生成ID、CreatedAt、UpdatedAt等字段
+// 所以这是软删除
 func DeleteTodo(c *gin.Context) {
 	todo, ok := getTodoByID(c)
 	if !ok {
@@ -186,11 +188,11 @@ func GetTodoStatistics(c *gin.Context) {
 	}
 
 	// 分组统计每种状态
-	if err := config.DB.Model(&models.Todo{}).
-	    Where("user_id = ?", userID).
-		Select("status, COUNT(*) as count").
-		Group("status").
-		Scan(&result).Error; err != nil {
+	if err := config.DB.Model(&models.Todo{}).	//指定表名是todos
+	    Where("user_id = ?", userID).			//只查询当前用户的任务
+		Select("status, COUNT(*) as count").	//选择状态和计数
+		Group("status").						//按状态分组
+		Scan(&result).Error; err != nil {		//把每行查到的数据填到result结构体中
 			utils.Error(c, http.StatusInternalServerError, "统计失败")
 			return
 		}
@@ -207,4 +209,28 @@ func GetTodoStatistics(c *gin.Context) {
 		}
 
 		utils.Success(c, gin.H{"statistics": stats}, "统计成功")
+}
+
+func RecoverTodo(c *gin.Context) {
+	id := c.Param("id")
+	userID := c.GetUint("user_id")
+
+	var todo models.Todo
+	//查找软删除的数据，需要用 Unscoped
+	if err := config.DB.Unscoped().Where("id = ? AND user_id = ?", id, userID).First(&todo).Error; err != nil {
+		utils.Error(c, http.StatusNotFound, "任务不存在")
+		return
+	}
+
+	// 只有软删除的数据才允许恢复
+	if !todo.DeletedAt.Valid {
+		utils.Error(c, http.StatusBadRequest, "任务未被软删除, 无需恢复")
+		return
+	}
+
+	// 通过更新deletedAt为null来恢复
+	if err := config.DB.Model(&todo).Update("deleted_at",nil).Error; err != nil {
+		utils.Error(c, http.StatusInternalServerError, "恢复失败")
+		return
+	}
 }
