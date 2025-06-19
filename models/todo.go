@@ -4,6 +4,13 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	StatusPending     = "pending"
+	StatusInProgress  = "in_progress"
+	StatusDone        = "done"
+	StatusExpired     = "expired"
+)
+
 type Todo struct {
 	gorm.Model         //一些共有的字段
 	Title       string `json:"title"`

@@ -41,5 +41,7 @@ func SetupRouters(r *gin.Engine) {
 		auth.POST("/todos/:id/tags", controllers.SetTodoTags)
 		auth.GET("/todos/:id/tags", controllers.GetTodoTags)
 		auth.DELETE("/todos/:id/tags/:tag_id", controllers.RemoveTodoTag)
+
+		auth.GET("/todos/statistics", controllers.GetTodoStatistics)
 	}
 }

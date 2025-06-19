@@ -176,3 +176,35 @@ func DeleteTodo(c *gin.Context) {
 	}
 	utils.Success(c, nil, "删除成功")
 }
+
+func GetTodoStatistics(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	var result []struct {
+		Status string `json:"status"`
+		Count  int64  `json:"count"`
+	}
+
+	// 分组统计每种状态
+	if err := config.DB.Model(&models.Todo{}).
+	    Where("user_id = ?", userID).
+		Select("status, COUNT(*) as count").
+		Group("status").
+		Scan(&result).Error; err != nil {
+			utils.Error(c, http.StatusInternalServerError, "统计失败")
+			return
+		}
+
+		//把结果转换成 map 数据结构
+		stats := map[string] int64 {
+			"pending": 0,
+			"in_progress": 0,
+			"done": 0,
+			"expired": 0,
+		}
+		for _, r := range result {
+			stats[r.Status] = r.Count
+		}
+
+		utils.Success(c, gin.H{"statistics": stats}, "统计成功")
+}
